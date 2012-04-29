@@ -18,13 +18,10 @@ original = File.open(options[:original])
 locked = File.open(options[:locked])
 
 raise "Locked and original file are not of same size." unless original.size == locked.size
-raise "File is too small." if original.size < options[:encrypted_size]
+raise "Files need to be at least 4096 bytes long." if original.size < options[:encrypted_size]
 
-begin
-  key = original.read(options[:encrypted_size]).bytes.map { |byte| byte ^ locked.readbyte }
-rescue EOFError
-  raise "Locked file is to small."
-end
+# XOR first 4096 bytes of original and locked file to retrieve key
+key = original.read(options[:encrypted_size]).bytes.map { |byte| byte ^ locked.readbyte }
 
+# write binary key to file
 File.open(options[:key], "wb") { |f| f.write key.pack "C*" }
-
